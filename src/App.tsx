@@ -288,11 +288,6 @@ export const App: React.FC = () => {
             </div>
             <div>
               <span className="font-bold text-sm tracking-tight block">Training Check-In</span>
-              {session && (
-                <span className="text-[11px] text-muted-foreground truncate block max-w-[180px]">
-                  {session.title}
-                </span>
-              )}
             </div>
           </div>
 

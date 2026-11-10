@@ -66,6 +66,9 @@ export const ExportView: React.FC<ExportViewProps> = ({
     <div className="export-view space-y-6">
       {/* Printable Area Styling */}
       <style dangerouslySetInnerHTML={{ __html: `
+        #printable-roster {
+          display: none;
+        }
         @media print {
           body * {
             visibility: hidden;
@@ -74,6 +77,7 @@ export const ExportView: React.FC<ExportViewProps> = ({
             visibility: visible;
           }
           #printable-roster {
+            display: block !important;
             position: absolute;
             left: 0;
             top: 0;
@@ -122,21 +126,21 @@ export const ExportView: React.FC<ExportViewProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="p-2 rounded-lg bg-muted/50">
-            <span className="text-muted-foreground block">Session</span>
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+            <span className="text-[11px] text-muted-foreground block mb-0.5">Session Title</span>
             <span className="font-semibold text-foreground truncate block">{session.title}</span>
           </div>
-          <div className="p-2 rounded-lg bg-muted/50">
-            <span className="text-muted-foreground block">Date</span>
-            <span className="font-semibold text-foreground">{session.date}</span>
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+            <span className="text-[11px] text-muted-foreground block mb-0.5">Date</span>
+            <span className="font-semibold text-foreground block">{session.date}</span>
           </div>
-          <div className="p-2 rounded-lg bg-muted/50">
-            <span className="text-muted-foreground block">Total Attendees</span>
-            <span className="font-semibold text-foreground">{attendees.length}</span>
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+            <span className="text-[11px] text-muted-foreground block mb-0.5">Total Attendees</span>
+            <span className="font-bold text-foreground text-sm block">{attendees.length}</span>
           </div>
-          <div className="p-2 rounded-lg bg-muted/50">
-            <span className="text-muted-foreground block">File Name</span>
-            <span className="font-mono text-[11px] text-foreground truncate block">{filename}</span>
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+            <span className="text-[11px] text-muted-foreground block mb-0.5">File Name</span>
+            <span className="font-mono text-[11px] text-foreground truncate block" title={filename}>{filename}</span>
           </div>
         </div>
 
@@ -224,7 +228,7 @@ export const ExportView: React.FC<ExportViewProps> = ({
       </div>
 
       {/* Clean Printable Roster View (Hidden on screen, visible during window.print) */}
-      <div id="printable-roster" className="p-6 bg-white text-black font-sans">
+      <div id="printable-roster" className="hidden print:block p-6 bg-white text-black font-sans">
         <div className="border-b-2 border-black pb-4 mb-4">
           <h1 className="text-2xl font-bold uppercase">{session.title}</h1>
           <div className="grid grid-cols-2 gap-2 text-sm mt-2">

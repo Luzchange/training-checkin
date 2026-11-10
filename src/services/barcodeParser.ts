@@ -23,18 +23,30 @@ function cleanString(str: string): string {
 }
 
 /**
+ * Clean up extra leading/trailing padding characters that can creep in from 1-character shifts
+ */
+function cleanNamePart(part: string): string {
+  let cleaned = cleanString(part).toUpperCase();
+  // Strip leading non-alphabetics
+  cleaned = cleaned.replace(/^[^A-Z]+/, '');
+  // Strip trailing non-alphabetics
+  cleaned = cleaned.replace(/[^A-Z]+$/, '');
+  return cleaned;
+}
+
+/**
  * Format raw names: "LAST, FIRST M"
  */
 function formatDisplayName(first: string, last: string, middleInitial?: string): string {
-  const f = cleanString(first).toUpperCase();
-  const l = cleanString(last).toUpperCase();
-  const m = middleInitial ? cleanString(middleInitial).toUpperCase() : '';
+  const f = cleanNamePart(first);
+  const l = cleanNamePart(last);
+  const m = middleInitial ? cleanString(middleInitial).toUpperCase().charAt(0) : '';
 
   if (!l && !f) return '';
   if (!f) return l;
   if (!l) return f;
 
-  return m ? `${l}, ${f} ${m}` : `${l}, ${f}`;
+  return m && /[A-Z]/.test(m) ? `${l}, ${f} ${m}` : `${l}, ${f}`;
 }
 
 /**
@@ -99,8 +111,16 @@ export function parseRealCacBarcode(rawPayload: string): BarcodeParseResult {
     const versionChar = target88.charAt(0);
     if (versionChar === '1' || versionChar === 'N') {
       try {
-        const firstNameRaw = target88.substring(14, 34);
-        const lastNameRaw = target88.substring(34, 60);
+        // According to DoD CAC v1 / vN specification:
+        // Version 1 / N: Char 0 (1 char)
+        // PDI: Chars 1..6 (6 chars)
+        // PDT: Char 7 (1 char)
+        // EDIPI: Chars 8..14 (7 chars: Base-32 encoded number)
+        // First Name: Chars 15..34 (20 chars, space padded)
+        // Last Name: Chars 35..60 (26 chars, space padded)
+        // Middle Initial: Char 88 (89th character if Version N)
+        const firstNameRaw = target88.substring(15, 35);
+        const lastNameRaw = target88.substring(35, 61);
         let middleInitial = '';
 
         if (target88.length === 89) {
@@ -110,10 +130,12 @@ export function parseRealCacBarcode(rawPayload: string): BarcodeParseResult {
         const displayName = formatDisplayName(firstNameRaw, lastNameRaw, middleInitial);
 
         let detectedUnit: string | undefined = undefined;
-        if (target88.length >= 75) {
-          const branchChar = target88.charAt(74).toUpperCase();
+        if (target88.length >= 76) {
+          const branchChar = target88.charAt(75).toUpperCase();
           if (BRANCH_CODE_MAP[branchChar]) {
             detectedUnit = BRANCH_CODE_MAP[branchChar];
+          } else if (BRANCH_CODE_MAP[target88.charAt(74).toUpperCase()]) {
+            detectedUnit = BRANCH_CODE_MAP[target88.charAt(74).toUpperCase()];
           }
         }
 
@@ -275,18 +297,18 @@ export function createSyntheticCac89String(first: string, last: string, mi: stri
   const pdi = '123456';
   // 1 char PDT (index 7)
   const pdt = 'D';
-  // 6 chars EDIPI (indices 8-13)
-  const edipi = '123456';
-  // 20 chars First name (indices 14-33, padded with spaces)
+  // 7 chars EDIPI (indices 8-14: 7 chars base-32)
+  const edipi = '1234567';
+  // 20 chars First name (indices 15-34, padded with spaces)
   const fnPadded = first.toUpperCase().padEnd(20, ' ').substring(0, 20);
-  // 26 chars Last name (indices 34-59, padded with spaces)
+  // 26 chars Last name (indices 35-60, padded with spaces)
   const lnPadded = last.toUpperCase().padEnd(26, ' ').substring(0, 26);
-  // 14 chars filler for personnel fields (indices 60-73)
+  // 14 chars filler for personnel fields (indices 61-74)
   const filler1 = '00000000000000';
-  // 1 char branch code (index 74: 'A', 'F', 'N', etc.)
+  // 1 char branch code (index 75: 'A', 'F', 'N', etc.)
   const branch = (branchCode || 'A').toUpperCase().charAt(0);
-  // 13 chars filler for expiration/rank (indices 75-87)
-  const filler2 = '0000000000000';
+  // 12 chars filler for expiration/rank (indices 76-87)
+  const filler2 = '000000000000';
   // 1 char Middle Initial (index 88, 89th char)
   const middleInitial = (mi || ' ').toUpperCase().charAt(0);
 
