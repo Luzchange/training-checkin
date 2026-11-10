@@ -320,7 +320,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
       )}
 
       {/* Viewfinder and Camera Feed */}
-      <div className="relative rounded-2xl overflow-hidden bg-black aspect-[3/4] max-h-[460px] flex items-center justify-center border-2 border-border shadow-inner">
+      <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] sm:aspect-[3/4] max-h-[420px] w-full flex items-center justify-center border-2 border-border shadow-inner">
         <video
           ref={videoRef}
           playsInline
@@ -329,33 +329,36 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
         />
 
         {!isScanning && (
-          <div className="text-center p-6 text-muted-foreground flex flex-col items-center">
-            <Camera className="w-12 h-12 mb-3 stroke-1 text-muted-foreground/60" />
-            <p className="text-sm font-medium">Camera is inactive</p>
-            <p className="text-xs text-muted-foreground/80 mt-1 max-w-[200px]">
-              Tap Start Scanning to begin reading front CAC barcodes
+          <div className="text-center p-6 text-muted-foreground flex flex-col items-center justify-center w-full">
+            <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center mb-3 text-3xl">
+              🪪
+            </div>
+            <p className="text-sm font-semibold text-foreground">Camera is Ready</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
+              Tap Start Scanning to scan the PDF417 barcode on the front of the CAC
             </p>
           </div>
         )}
 
         {/* Reticle / Target Overlay */}
         {isScanning && (
-          <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-6">
-            <div className="bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium">
-              Scan FRONT barcode (PDF417)
+          <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-4">
+            <div className="bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow">
+              <span>🪪</span>
+              <span>Scan FRONT barcode (PDF417)</span>
             </div>
 
             {/* Target Box */}
-            <div className="relative w-64 h-40 border-2 border-primary/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]">
-              <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-white" />
-              <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-white" />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white" />
-              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-red-500/60 animate-pulse" />
+            <div className="relative w-64 h-36 border-2 border-primary/90 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
+              <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-primary" />
+              <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-primary" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary" />
+              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-primary/80 animate-pulse" />
             </div>
 
-            <div className="text-[11px] text-white/80 bg-black/60 px-3 py-1 rounded-full">
-              Position front barcode inside the box
+            <div className="text-[11px] text-white/90 bg-black/70 px-3 py-1 rounded-full">
+              Fit the front 2D barcode inside box
             </div>
           </div>
         )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, ArrowRight, Play, Database, Info } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Play, Database, Info } from 'lucide-react';
 import { SavedSessionState } from '../types';
 
 interface WelcomeScreenProps {
@@ -31,8 +31,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       </div>
 
       <div className="text-center py-4">
-        <div className="inline-flex p-3 rounded-2xl bg-primary/10 text-primary mb-3">
-          <ShieldCheck className="w-10 h-10" />
+        <div className="inline-flex p-3.5 rounded-2xl bg-primary/10 text-primary mb-3 text-4xl shadow-xs">
+          🪪
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Training Check-In</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">

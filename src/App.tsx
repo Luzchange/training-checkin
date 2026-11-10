@@ -24,7 +24,6 @@ import { AttendanceList } from './components/AttendanceList';
 import { ExportView } from './components/ExportView';
 import { PrivacySettingsModal } from './components/PrivacySettingsModal';
 import {
-  ShieldCheck,
   Moon,
   Sun,
   Users,
@@ -283,8 +282,8 @@ export const App: React.FC = () => {
       <header className="sticky top-0 z-30 bg-card/90 backdrop-blur-md border-b border-border px-4 py-3 shadow-xs">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg select-none">
+              🪪
             </div>
             <div>
               <span className="font-bold text-sm tracking-tight block">Training Check-In</span>

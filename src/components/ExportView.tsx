@@ -126,21 +126,21 @@ export const ExportView: React.FC<ExportViewProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
             <span className="text-[11px] text-muted-foreground block mb-0.5">Session Title</span>
             <span className="font-semibold text-foreground truncate block">{session.title}</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
             <span className="text-[11px] text-muted-foreground block mb-0.5">Date</span>
             <span className="font-semibold text-foreground block">{session.date}</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
             <span className="text-[11px] text-muted-foreground block mb-0.5">Total Attendees</span>
             <span className="font-bold text-foreground text-sm block">{attendees.length}</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50">
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
             <span className="text-[11px] text-muted-foreground block mb-0.5">File Name</span>
-            <span className="font-mono text-[11px] text-foreground truncate block" title={filename}>{filename}</span>
+            <span className="font-mono text-[10px] text-foreground truncate block overflow-hidden" title={filename}>{filename}</span>
           </div>
         </div>
 
