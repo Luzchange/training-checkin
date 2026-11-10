@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
+android/captures/
+android/.idea/
+android/*.iml
+android/app/*.iml
+training-checkin.apk
