@@ -152,5 +152,8 @@ describe('Barcode Parser Service - CAC & Security Tests', () => {
     expect(formatDisplayName('JOHN', 'DOE', 'M')).toBe('DOE, JOHN M');
     expect(formatDisplayName('', 'DOE')).toBe('DOE');
     expect(formatDisplayName('JOHN', '')).toBe('JOHN');
+    // When first name already includes middle initial (e.g. 'MARTIN G')
+    expect(formatDisplayName('MARTIN G', 'GAKURIA')).toBe('GAKURIA, MARTIN G');
+    expect(formatDisplayName('MARTIN G', 'GAKURIA', 'B')).toBe('GAKURIA, MARTIN G');
   });
 });

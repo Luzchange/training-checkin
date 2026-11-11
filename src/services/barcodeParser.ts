@@ -65,6 +65,12 @@ export function formatDisplayName(first: string, last: string, middleInitial?: s
   if (!f) return l;
   if (!l) return f;
 
+  // If the first name field already contains a middle initial or multiple words (e.g. "MARTIN G"),
+  // use that and do not append a trailing initial from charAt(88).
+  if (/\s+[A-Z](\.?)$/.test(f)) {
+    return `${l}, ${f}`;
+  }
+
   return m && /[A-Z]/.test(m) ? `${l}, ${f} ${m}` : `${l}, ${f}`;
 }
 
@@ -126,7 +132,9 @@ export function parseRealCacBarcode(rawPayload: string): BarcodeParseResult {
         const lastNameRaw = target88.substring(35, 61);
         let middleInitial = '';
 
-        if (target88.length === 89) {
+        // Middle Initial: Only Version N specifies an explicit 89th character (index 88) for MI.
+        // Version 1 (88 chars) does NOT have an 88th char MI field.
+        if (target88.length === 89 && versionChar === 'N') {
           middleInitial = target88.charAt(88);
         }
 
