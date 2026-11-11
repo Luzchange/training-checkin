@@ -44,8 +44,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
   const [showExplanation, setShowExplanation] = useState<boolean>(true);
   const animationFrameIdRef = useRef<number | null>(null);
 
-  // In-memory scan suppression (debouncing)
-  // Prevents repeated rapid scans when holding a card in front of camera
   const lastScanTimeRef = useRef<number>(0);
   const lastScanPayloadRef = useRef<string>('');
 
@@ -65,8 +63,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
       });
       streamRef.current = null;
     }
-    if (readerRef.current) {
-      // BrowserMultiFormatReader doesn't have a direct destroy, but stopping the stream stops decoding
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setIsScanning(false);
     setTorchOn(false);
@@ -98,7 +96,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
       const videoInputs = devices.filter((d) => d.kind === 'videoinput');
       setVideoDevices(videoInputs);
 
-      // Prefer rear camera if not already selected
       if (!selectedDeviceId && videoInputs.length > 0) {
         const backCamera = videoInputs.find(
           (d) => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear') || d.label.toLowerCase().includes('environment')
@@ -115,7 +112,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
     setErrorMessage(null);
     stopCamera();
 
-    // Context check: Camera requires secure context (HTTPS or localhost)
     if (window.isSecureContext === false) {
       setErrorMessage(
         'Camera access requires a secure context (HTTPS). Please ensure you are running over HTTPS or localhost.'
@@ -135,7 +131,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
         video: deviceId
           ? { deviceId: { exact: deviceId } }
           : {
-              facingMode: { ideal: 'environment' }, // Prefer rear-facing camera for barcode scanning
+              facingMode: { ideal: 'environment' },
               width: { ideal: 1280 },
               height: { ideal: 720 },
             },
@@ -146,13 +142,13 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
       streamRef.current = stream;
       setHasPermission(true);
       setShowExplanation(false);
+      setIsScanning(true);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        await videoRef.current.play().catch(() => {});
       }
 
-      // Check torch capability on the active track
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,8 +160,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
 
       await refreshDevices();
 
-      // Initialize ZXing reader with PDF417 & Code 39 hints and TRY_HARDER
+      // Initialize ZXing reader with PDF417 & Code 39 hints
       if (!readerRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const hints = new Map<DecodeHintType, any>();
         hints.set(DecodeHintType.POSSIBLE_FORMATS, [
           BarcodeFormat.PDF_417,
@@ -176,31 +173,28 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
         readerRef.current = new BrowserMultiFormatReader(hints);
       }
 
-      setIsScanning(true);
+      if (videoRef.current) {
+        readerRef.current.decodeFromVideoElement(videoRef.current, (result, error) => {
+          if (result) {
+            const rawText = result.getText();
+            const now = Date.now();
 
-      // Start decoding loop from video element
-      readerRef.current.decodeFromVideoElement(videoRef.current!, (result, error) => {
-        if (result) {
-          const rawText = result.getText();
-          const now = Date.now();
+            if (rawText === lastScanPayloadRef.current && now - lastScanTimeRef.current < 3000) {
+              return;
+            }
 
-          // Debounce check: Suppress repeated scans of identical payload within 3 seconds
-          if (rawText === lastScanPayloadRef.current && now - lastScanTimeRef.current < 3000) {
-            return;
+            lastScanPayloadRef.current = rawText;
+            lastScanTimeRef.current = now;
+
+            const parseResult = parseBarcodePayload(rawText);
+            onScanResult(parseResult);
           }
 
-          lastScanPayloadRef.current = rawText;
-          lastScanTimeRef.current = now;
-
-          // Parse immediately and discard raw payload
-          const parseResult = parseBarcodePayload(rawText);
-          onScanResult(parseResult);
-        }
-
-        if (error && !(error instanceof NotFoundException)) {
-          // Normal frame with no barcode found is NotFoundException, ignore.
-        }
-      });
+          if (error && !(error instanceof NotFoundException)) {
+            // Normal scan attempt without barcode
+          }
+        });
+      }
     } catch (err: unknown) {
       stopCamera();
       const error = err as Error;
@@ -217,7 +211,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
     }
   };
 
-  // Toggle Torch
   const toggleTorch = async () => {
     if (!streamRef.current) return;
     const track = streamRef.current.getVideoTracks()[0];
@@ -235,7 +228,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
     }
   };
 
-  // Switch camera if multiple cameras available
   const switchCamera = () => {
     if (videoDevices.length < 2) return;
     const currentIndex = videoDevices.findIndex((d) => d.deviceId === selectedDeviceId);
@@ -320,46 +312,55 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
       )}
 
       {/* Viewfinder and Camera Feed */}
-      <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] sm:aspect-[3/4] max-h-[420px] w-full flex items-center justify-center border-2 border-border shadow-inner">
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          className={`w-full h-full object-cover ${!isScanning ? 'hidden' : 'block'}`}
-        />
+      <div className="relative rounded-2xl overflow-hidden bg-card border-2 border-border shadow-inner aspect-[4/3] sm:aspect-[3/4] max-h-[420px] w-full flex items-center justify-center">
+        {/* Render video only when actively scanning to eliminate browser media player fallback */}
+        {isScanning ? (
+          <>
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              autoPlay
+              className="w-full h-full object-cover bg-black"
+            />
+            {/* Reticle / Target Overlay */}
+            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-4">
+              <div className="bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow">
+                <span>🪪</span>
+                <span>Scan FRONT barcode (PDF417)</span>
+              </div>
 
-        {!isScanning && (
+              {/* Target Box */}
+              <div className="relative w-64 h-36 border-2 border-primary/90 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
+                <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary" />
+                <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-primary" />
+                <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-primary" />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary" />
+                <div className="absolute inset-x-0 top-1/2 h-0.5 bg-primary/80 animate-pulse" />
+              </div>
+
+              <div className="text-[11px] text-white/90 bg-black/70 px-3 py-1 rounded-full">
+                Fit the front 2D barcode inside box
+              </div>
+            </div>
+          </>
+        ) : (
           <div className="text-center p-6 text-muted-foreground flex flex-col items-center justify-center w-full">
-            <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center mb-3 text-3xl">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 text-3xl shadow-sm">
               🪪
             </div>
-            <p className="text-sm font-semibold text-foreground">Camera is Ready</p>
-            <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
-              Tap Start Scanning to scan the PDF417 barcode on the front of the CAC
+            <p className="text-sm font-semibold text-foreground">Camera is Inactive</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[240px] leading-relaxed">
+              Tap Start below to activate camera and scan the front PDF417 card barcode
             </p>
-          </div>
-        )}
-
-        {/* Reticle / Target Overlay */}
-        {isScanning && (
-          <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-4">
-            <div className="bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow">
-              <span>🪪</span>
-              <span>Scan FRONT barcode (PDF417)</span>
-            </div>
-
-            {/* Target Box */}
-            <div className="relative w-64 h-36 border-2 border-primary/90 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
-              <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-primary" />
-              <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-primary" />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary" />
-              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-primary/80 animate-pulse" />
-            </div>
-
-            <div className="text-[11px] text-white/90 bg-black/70 px-3 py-1 rounded-full">
-              Fit the front 2D barcode inside box
-            </div>
+            <button
+              type="button"
+              onClick={() => startCamera(selectedDeviceId || undefined)}
+              className="btn btn-primary text-xs px-4 py-2 mt-4 flex items-center gap-2"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Start Camera</span>
+            </button>
           </div>
         )}
       </div>
@@ -448,4 +449,3 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({
     </div>
   );
 };
-

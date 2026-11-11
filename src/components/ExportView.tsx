@@ -38,7 +38,6 @@ export const ExportView: React.FC<ExportViewProps> = ({
   const filename = generateSafeExportFilename(session, 'csv');
   const csvContent = buildAttendanceCsv(session, attendees);
 
-  // Native share sheet or download fallback
   const handleShare = async () => {
     setShareError(null);
     const result = await shareAttendanceFile(filename, csvContent, session.title);
@@ -48,7 +47,6 @@ export const ExportView: React.FC<ExportViewProps> = ({
       if (result.error) {
         setShareError(`System sharing unavailable (${result.error}). Downloading file instead.`);
       }
-      // Download fallback
       handleDownload();
     }
   };
@@ -64,31 +62,6 @@ export const ExportView: React.FC<ExportViewProps> = ({
 
   return (
     <div className="export-view space-y-6">
-      {/* Printable Area Styling */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        #printable-roster {
-          display: none;
-        }
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-roster, #printable-roster * {
-            visibility: visible;
-          }
-          #printable-roster {
-            display: block !important;
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}} />
-
       <div className="no-print flex items-center justify-between">
         <button
           type="button"
@@ -125,27 +98,33 @@ export const ExportView: React.FC<ExportViewProps> = ({
           <span>Roster Export Summary</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
-            <span className="text-[11px] text-muted-foreground block mb-0.5">Session Title</span>
-            <span className="font-semibold text-foreground truncate block">{session.title}</span>
+        {/* Semantic Definition List with resilient responsive layout */}
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+          <div className="p-3 rounded-lg bg-muted/50 border border-border/50 min-w-0">
+            <dt className="text-[11px] font-medium text-muted-foreground mb-1">Session Title</dt>
+            <dd className="font-semibold text-foreground break-words m-0">{session.title}</dd>
           </div>
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
-            <span className="text-[11px] text-muted-foreground block mb-0.5">Date</span>
-            <span className="font-semibold text-foreground block">{session.date}</span>
+
+          <div className="p-3 rounded-lg bg-muted/50 border border-border/50 min-w-0">
+            <dt className="text-[11px] font-medium text-muted-foreground mb-1">Date</dt>
+            <dd className="font-semibold text-foreground m-0">{session.date}</dd>
           </div>
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
-            <span className="text-[11px] text-muted-foreground block mb-0.5">Total Attendees</span>
-            <span className="font-bold text-foreground text-sm block">{attendees.length}</span>
+
+          <div className="p-3 rounded-lg bg-muted/50 border border-border/50 min-w-0">
+            <dt className="text-[11px] font-medium text-muted-foreground mb-1">Total Attendees</dt>
+            <dd className="font-bold text-foreground text-sm m-0">{attendees.length}</dd>
           </div>
-          <div className="p-2.5 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
-            <span className="text-[11px] text-muted-foreground block mb-0.5">File Name</span>
-            <span className="font-mono text-[10px] text-foreground truncate block overflow-hidden" title={filename}>{filename}</span>
+
+          <div className="p-3 rounded-lg bg-muted/50 border border-border/50 min-w-0">
+            <dt className="text-[11px] font-medium text-muted-foreground mb-1">File Name</dt>
+            <dd className="font-mono text-[11px] text-foreground break-all overflow-anywhere m-0" title={filename}>
+              {filename}
+            </dd>
           </div>
-        </div>
+        </dl>
 
         <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 text-xs">
-          <strong>Privacy reminder:</strong> This exported file contains real attendance records. Handle and distribute it strictly in compliance with your organizational policies.
+          <strong>Privacy reminder:</strong> This exported file contains attendance records. Handle and distribute it strictly in compliance with your organizational policies.
         </div>
       </div>
 
@@ -227,8 +206,8 @@ export const ExportView: React.FC<ExportViewProps> = ({
         )}
       </div>
 
-      {/* Clean Printable Roster View (Hidden on screen, visible during window.print) */}
-      <div id="printable-roster" className="hidden print:block p-6 bg-white text-black font-sans">
+      {/* Clean Printable Roster View (Strictly print-only, completely omitted from screen rendering) */}
+      <div id="printable-roster" className="print-only p-6 bg-white text-black font-sans">
         <div className="border-b-2 border-black pb-4 mb-4">
           <h1 className="text-2xl font-bold uppercase">{session.title}</h1>
           <div className="grid grid-cols-2 gap-2 text-sm mt-2">
@@ -262,7 +241,7 @@ export const ExportView: React.FC<ExportViewProps> = ({
             {attendees.map((a, i) => (
               <tr key={a.id} className="border-b border-gray-300">
                 <td className="py-2 px-1 font-mono">{i + 1}</td>
-                <td className="py-2 px-2 font-mono font-semibold">{a.displayName}</td>
+                <td className="py-2 px-2 font-semibold">{a.displayName}</td>
                 <td className="py-2 px-2 font-mono text-gray-600">
                   {new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </td>
@@ -281,4 +260,3 @@ export const ExportView: React.FC<ExportViewProps> = ({
     </div>
   );
 };
-
